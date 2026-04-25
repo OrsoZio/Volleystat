@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>VolleyScout v4</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d1117;
+  --surface: #161b22;
+  --surface2: #1e2530;
+  --border: #2d3748;
+  --accent: #f6ad55;
+  --red: #fc8181;
+  --green: #68d391;
+  --blue: #63b3ed;
+  --purple: #b794f4;
+  --teal: #4fd1c7;
+  --text: #e2e8f0;
+  --muted: #718096;
+  --r: 12px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;min-height:100vh;overflow-x:hidden}
+
+/* ── SCHERMATE ── */
+.screen{display:none;flex-direction:column;min-height:100vh;padding:14px;gap:11px}
+.screen.active{display:flex}
+
+/* ── TIPOGRAFIA ── */
+.logo{font-family:'Barlow Condensed',sans-serif;font-size:2.6rem;font-weight:900;letter-spacing:-1px;color:var(--accent);text-transform:uppercase}
+.logo span{color:var(--text)}
+.sec-title{font-family:'Barlow Condensed',sans-serif;font-size:0.82rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted)}
+
+/* ── SCHEDE ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px}
+.card-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px}
+
+/* ── CAMPI INPUT ── */
+label{font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--muted);display:block;margin-bottom:4px}
+input[type=text],input[type=number],select{
+  background:var(--surface2);border:1px solid var(--border);border-radius:8px;
+  color:var(--text);font-family:'Barlow',sans-serif;font-size:0.88rem;
+  padding:9px 11px;width:100%;outline:none;transition:border-color .2s}
+input:focus,select:focus{border-color:var(--accent)}
+select option{background:var(--surface2)}
+
+/* ── PULSANTI ── */
+.btn{border:none;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-weight:700;
+  text-transform:uppercase;letter-spacing:.5px;cursor:pointer;transition:opacity .15s,transform .1s}
+.btn:active{opacity:.82;transform:scale(.97)}
+.btn-primary{background:var(--accent);color:#0d1117;font-size:1.05rem;padding:14px;width:100%}
+.btn-sm{background:var(--surface2);border:1px solid var(--border);color:var(--muted);font-size:.82rem;padding:9px 13px}
+.btn-blue{background:var(--blue);color:#0d1117;font-size:.88rem;padding:10px 14px}
+.btn-green{background:var(--green);color:#0d1117;font-size:1rem;padding:14px;width:100%}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--muted);font-size:.88rem;padding:12px;width:100%}
+.btn-remove{background:transparent;border:none;color:var(--muted);font-size:.95rem;cursor:pointer;padding:3px 7px}
+.btn-remove:hover{color:var(--red)}
+
+/* ════════════════════════════
+   S1 — DATI PARTITA
+════════════════════════════ */
+#s-match{align-items:center;justify-content:center;gap:18px}
+.setup-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+  padding:22px;width:100%;max-width:480px;display:flex;flex-direction:column;gap:14px}
+.field-grp{display:flex;flex-direction:column;gap:4px}
+
+/* ════════════════════════════
+   S2 — ROSA
+════════════════════════════ */
+.roster-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.roster-tbl{width:100%;border-collapse:collapse;font-size:.8rem;min-width:320px}
+.roster-tbl th{background:var(--surface2);padding:7px 9px;text-align:left;
+  font-family:'Barlow Condensed',sans-serif;font-size:.7rem;font-weight:700;
+  text-transform:uppercase;letter-spacing:.5px;color:var(--muted);border-bottom:1px solid var(--border)}
+.roster-tbl td{padding:5px 7px;border-bottom:1px solid rgba(45,55,72,.35);vertical-align:middle}
+.roster-tbl tr:last-child td{border-bottom:none}
+.roster-tbl input,.roster-tbl select{padding:7px 8px;font-size:.8rem}
+.role-pill{display:inline-block;font-family:'Barlow Condensed',sans-serif;font-size:.7rem;
+  font-weight:700;padding:2px 7px;border-radius:4px;text-transform:uppercase}
+.rP {background:rgba(246,173,85,.15);color:var(--accent)}
+.rS1{background:rgba(104,211,145,.15);color:var(--green)}
+.rS2{background:rgba(104,211,145,.10);color:#9ae6b4}
+.rC1{background:rgba(99,179,237,.15);color:var(--blue)}
+.rC2{background:rgba(99,179,237,.10);color:#90cdf4}
+.rO {background:rgba(252,129,129,.15);color:var(--red)}
+.rL {background:rgba(79,209,199,.15);color:var(--teal)}
+
+/* ════════════════════════════
+   S3 — FORMAZIONE (campo visivo)
+════════════════════════════ */
+#s-lineup{gap:11px}
+
+/* Selettore posizione palleggiatrice */
+.setter-picker{display:flex;gap:6px;flex-wrap:wrap}
+.sp-btn{flex:1;min-width:48px;background:var(--surface2);border:2px solid var(--border);
+  border-radius:8px;color:var(--muted);font-family:'Barlow Condensed',sans-serif;
+  font-size:.9rem;font-weight:700;text-transform:uppercase;padding:9px 4px;
+  cursor:pointer;text-align:center;transition:background .15s,border-color .15s,color .15s}
+.sp-btn.sel{background:rgba(246,173,85,.15);border-color:var(--accent);color:var(--accent)}
+
+/* Campo formazione visivo */
+.lineup-court-wrap{position:relative}
+.lineup-court{display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:1fr 1fr;
+  gap:7px;background:#0a2a1a;border:2px solid #1a5c38;border-radius:10px;padding:10px;
+  min-height:200px;position:relative}
+.lineup-court::after{content:'';position:absolute;left:50%;top:50%;
+  transform:translate(-50%,-50%);width:calc(100% - 20px);height:2px;background:rgba(255,255,255,.1)}
+/* Etichetta rete */
+.net-label{font-family:'Barlow Condensed',sans-serif;font-size:.6rem;font-weight:700;
+  color:rgba(255,255,255,.25);text-transform:uppercase;letter-spacing:2px;
+  text-align:center;padding:2px 0;margin-bottom:2px}
+.back-label,.front-label{font-size:.58rem;color:rgba(255,255,255,.2);
+  font-family:'Barlow Condensed',sans-serif;font-weight:700;text-transform:uppercase;
+  letter-spacing:1px;padding:2px 4px}
+
+.lc-cell{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);
+  border-radius:8px;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;padding:6px 4px;gap:4px;min-height:72px;position:relative;
+  transition:border-color .15s,background .15s}
+.lc-cell.is-setter{background:rgba(246,173,85,.12);border-color:var(--accent)}
+.pos-tag{position:absolute;top:3px;left:5px;font-family:'Barlow Condensed',sans-serif;
+  font-size:.6rem;font-weight:700;color:var(--muted)}
+.lc-cell.is-setter .pos-tag{color:var(--accent)}
+.lc-cell select{background:var(--surface2);border:1px solid var(--border);border-radius:6px;
+  color:var(--text);font-family:'Barlow',sans-serif;font-size:.72rem;padding:5px 6px;
+  width:100%;outline:none;cursor:pointer;margin-top:10px}
+.lc-cell select:focus{border-color:var(--accent)}
+.lc-role-hint{font-size:.58rem;font-family:'Barlow Condensed',sans-serif;font-weight:700;
+  text-transform:uppercase;letter-spacing:.5px}
+
+/* Sezione libero */
+.libero-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+
+/* ════════════════════════════
+   S4 — PARTITA IN CORSO
+════════════════════════════ */
+#s-main{gap:9px}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:3px 0}
+.logo-sm{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;color:var(--accent)}
+.match-sm{font-size:.68rem;color:var(--muted);text-align:center;flex:1;padding:0 8px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* Punteggio */
+.score-block{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+  padding:10px 13px;display:flex;align-items:center;gap:6px}
+.team-score{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px}
+.team-nm{font-size:.62rem;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--muted)}
+.score-n{font-family:'Barlow Condensed',sans-serif;font-size:3rem;font-weight:900;line-height:1}
+.score-n.us{color:var(--accent)}
+.score-div{font-family:'Barlow Condensed',sans-serif;font-size:2rem;font-weight:900;color:var(--border)}
+.sc-ctrl{display:flex;flex-direction:column;gap:4px}
+.sc-btn{background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);
+  font-size:1.1rem;font-weight:700;width:37px;height:33px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center}
+.sc-btn:active{background:var(--accent);color:#0d1117}
+.set-info{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:65px}
+.set-lbl{font-size:.62rem;font-weight:700;text-transform:uppercase;color:var(--muted)}
+.set-n{font-family:'Barlow Condensed',sans-serif;font-size:1.6rem;font-weight:900;color:var(--blue)}
+.set-hist{font-size:.58rem;color:var(--muted);text-align:center;line-height:1.3}
+.btn-nset{background:var(--blue);color:#0d1117;border:none;border-radius:6px;
+  font-family:'Barlow Condensed',sans-serif;font-size:.68rem;font-weight:700;
+  text-transform:uppercase;padding:5px 7px;cursor:pointer;white-space:nowrap}
+
+/* Campo */
+.court-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:11px;display:flex;flex-direction:column;gap:7px}
+.court-hd{display:flex;align-items:center;justify-content:space-between;gap:7px}
+.rot-badge{background:var(--accent);color:#0d1117;font-family:'Barlow Condensed',sans-serif;
+  font-size:.82rem;font-weight:900;padding:3px 11px;border-radius:20px;white-space:nowrap;
+  letter-spacing:.5px}
+.court{display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:1fr 1fr;
+  gap:5px;background:#0a2a1a;border:2px solid #1a5c38;border-radius:8px;padding:7px;
+  position:relative;min-height:140px}
+.court::after{content:'';position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:calc(100% - 14px);height:2px;background:rgba(255,255,255,.1)}
+.p-cell{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);
+  border-radius:7px;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;padding:4px 3px;position:relative;min-height:50px;transition:background .2s}
+.p-cell.is-serve{background:rgba(246,173,85,.12);border-color:var(--accent)}
+.p-cell.is-lib{background:rgba(79,209,199,.1);border-color:var(--teal)}
+.p-num{font-family:'Barlow Condensed',sans-serif;font-size:.58rem;font-weight:700;
+  color:var(--muted);position:absolute;top:3px;left:5px}
+.p-name{font-size:.66rem;font-weight:600;color:var(--text);text-align:center;
+  line-height:1.2;word-break:break-word}
+.p-role{font-size:.53rem;color:var(--muted);margin-top:1px}
+.p-cell.is-serve .p-name{color:var(--accent)}
+.p-cell.is-lib .p-name{color:var(--teal)}
+.p-cell.is-serve .p-role{color:var(--accent)}
+.p-serv-tag{font-size:.48rem;color:var(--accent)}
+.court-acts{display:flex;gap:7px}
+.btn-rotate{flex:2;background:var(--surface2);border:2px solid var(--accent);border-radius:8px;
+  color:var(--accent);font-family:'Barlow Condensed',sans-serif;font-size:.92rem;font-weight:700;
+  text-transform:uppercase;padding:10px;cursor:pointer;display:flex;align-items:center;
+  justify-content:center;gap:6px}
+.btn-rotate:active{background:var(--accent);color:#0d1117}
+.btn-switch-lib{flex:1;background:rgba(79,209,199,.08);border:1px solid var(--teal);
+  border-radius:8px;color:var(--teal);font-family:'Barlow Condensed',sans-serif;
+  font-size:.78rem;font-weight:700;text-transform:uppercase;padding:10px 7px;cursor:pointer}
+.btn-switch-lib:active{background:var(--teal);color:#0d1117}
+.hidden{display:none!important}
+
+/* Errori */
+.err-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+  padding:11px;display:flex;flex-direction:column;gap:9px}
+.err-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+@media(min-width:460px){.err-grid{grid-template-columns:repeat(4,1fr)}}
+.err-btn{background:var(--surface2);border:1px solid var(--border);border-radius:10px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:11px 5px;cursor:pointer;gap:3px;transition:transform .1s}
+.err-btn:active{transform:scale(.95)}
+.err-btn.servizio {border-top:3px solid var(--red)}
+.err-btn.ricezione{border-top:3px solid var(--purple)}
+.err-btn.alzata   {border-top:3px solid var(--blue)}
+.err-btn.attacco  {border-top:3px solid var(--green)}
+.err-ic{font-size:1.4rem}
+.err-lb{font-family:'Barlow Condensed',sans-serif;font-size:.78rem;font-weight:700;
+  text-transform:uppercase;color:var(--muted)}
+.err-ct{font-family:'Barlow Condensed',sans-serif;font-size:1.9rem;font-weight:900;line-height:1}
+.err-btn.servizio  .err-ct{color:var(--red)}
+.err-btn.ricezione .err-ct{color:var(--purple)}
+.err-btn.alzata    .err-ct{color:var(--blue)}
+.err-btn.attacco   .err-ct{color:var(--green)}
+.err-rg{font-size:.56rem;color:var(--muted);background:var(--bg);border-radius:4px;padding:1px 5px}
+@keyframes fl{0%{background:var(--surface2)}50%{background:rgba(246,173,85,.16)}100%{background:var(--surface2)}}
+.flash{animation:fl .3s ease}
+.acts-bar{display:flex;gap:7px}
+.btn-undo{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;
+  color:var(--muted);font-family:'Barlow Condensed',sans-serif;font-size:.82rem;
+  font-weight:700;text-transform:uppercase;padding:12px;cursor:pointer}
+.btn-undo:active{color:var(--red);border-color:var(--red)}
+.btn-end{flex:2;background:var(--surface2);border:1px solid var(--accent);border-radius:8px;
+  color:var(--accent);font-family:'Barlow Condensed',sans-serif;font-size:.82rem;
+  font-weight:700;text-transform:uppercase;padding:12px;cursor:pointer}
+.btn-end:active{background:var(--accent);color:#0d1117}
+
+/* ════════════════════════════
+   S5 — RIEPILOGO
+════════════════════════════ */
+#s-summary{gap:13px}
+.sum-ttl{font-family:'Barlow Condensed',sans-serif;font-size:1.9rem;font-weight:900;
+  text-transform:uppercase;color:var(--accent)}
+.sum-meta{font-size:.76rem;color:var(--muted)}
+.sum-score{font-family:'Barlow Condensed',sans-serif;font-size:1.35rem;font-weight:900;
+  text-align:center;padding:11px}
+.sum-score span{color:var(--accent)}
+table{width:100%;border-collapse:collapse;font-size:.8rem}
+th{background:var(--surface2);padding:7px 9px;text-align:center;
+  font-family:'Barlow Condensed',sans-serif;font-size:.7rem;font-weight:700;
+  text-transform:uppercase;letter-spacing:.5px;color:var(--muted);border-bottom:1px solid var(--border)}
+th:first-child{text-align:left}
+td{padding:8px 9px;text-align:center;border-bottom:1px solid rgba(45,55,72,.35)}
+td:first-child{text-align:left;font-weight:600}
+tr:last-child td{border-bottom:none}
+.cs{color:var(--red);   font-weight:700;font-family:'Barlow Condensed',sans-serif;font-size:.92rem}
+.cr{color:var(--purple);font-weight:700;font-family:'Barlow Condensed',sans-serif;font-size:.92rem}
+.ca{color:var(--blue);  font-weight:700;font-family:'Barlow Condensed',sans-serif;font-size:.92rem}
+.ct{color:var(--green); font-weight:700;font-family:'Barlow Condensed',sans-serif;font-size:.92rem}
+.tot-row td{background:var(--surface2);font-weight:700}
+.log-item{display:flex;align-items:center;gap:7px;padding:7px 11px;
+  border-bottom:1px solid rgba(45,55,72,.3);font-size:.76rem}
+.log-item:last-child{border-bottom:none}
+.log-pill{font-family:'Barlow Condensed',sans-serif;font-size:.66rem;font-weight:700;
+  text-transform:uppercase;padding:2px 7px;border-radius:4px;min-width:66px;text-align:center}
+.log-pill.servizio {background:rgba(252,129,129,.15);color:var(--red)}
+.log-pill.ricezione{background:rgba(183,148,244,.15);color:var(--purple)}
+.log-pill.alzata   {background:rgba(99,179,237,.15); color:var(--blue)}
+.log-pill.attacco  {background:rgba(104,211,145,.15);color:var(--green)}
+.log-det{color:var(--muted);flex:1}
+.empty{padding:16px;text-align:center;color:var(--muted);font-size:.8rem}
+
+/* Badge "Salvata" */
+.saved-badge{font-size:.65rem;color:var(--green);background:rgba(104,211,145,.1);
+  border:1px solid rgba(104,211,144,.3);border-radius:6px;padding:3px 9px;
+  font-family:'Barlow Condensed',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+
+/* Modale sostituzione */
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);
+  display:flex;align-items:center;justify-content:center;z-index:1000;padding:16px}
+.modal-overlay.hidden{display:none}
+.modal-content{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+  padding:18px;width:100%;max-width:380px;max-height:80vh;overflow-y:auto}
+.sub-player-list{display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto}
+.sub-player-btn{display:flex;align-items:center;gap:10px;background:var(--surface2);
+  border:1px solid var(--border);border-radius:8px;padding:12px 14px;cursor:pointer;
+  transition:background .15s,border-color .15s}
+.sub-player-btn:hover{background:rgba(104,211,145,.1);border-color:var(--green)}
+.sub-player-btn:active{transform:scale(.98)}
+.sub-p-num{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;
+  color:var(--accent);min-width:40px}
+.sub-p-name{flex:1;font-weight:600;color:var(--text)}
+.sub-p-role{font-family:'Barlow Condensed',sans-serif;font-size:.8rem;font-weight:700;
+  color:var(--muted);background:var(--bg);padding:2px 8px;border-radius:4px}
+
+/* Log sostituzioni */
+.sub-item{display:flex;align-items:center;gap:8px;padding:8px 12px;
+  border-bottom:1px solid rgba(45,55,72,.3);font-size:.78rem}
+.sub-item:last-child{border-bottom:none}
+.sub-arrow{color:var(--green);font-weight:700;font-size:1rem}
+.sub-out{color:var(--red)}
+.sub-in{color:var(--green)}
+.sub-meta{color:var(--muted);font-size:.66rem;margin-left:auto}
+
+/* Hover cella campo per sostituzione */
+.p-cell:hover{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.15)}
+</style>
+</head>
+<body>
+
+<!-- ══════ S1: DATI PARTITA ══════ -->
+<div id="s-match" class="screen active">
+  <div style="text-align:center">
+    <div class="logo">Volley<span>Scout</span></div>
+    <div style="font-size:.72rem;color:var(--muted);margin-top:3px">Errori non forzati · giovanile</div>
+  </div>
+  <div class="setup-card">
+    <div class="sec-title">Dati partita</div>
+    <div class="field-grp">
+      <label>Nostra squadra</label>
+      <input type="text" id="our-name" placeholder="es. Polisportiva Alba U16" />
+    </div>
+    <div class="field-grp">
+      <label>Avversario</label>
+      <input type="text" id="opp-name" placeholder="es. Pallavolo Novara" />
+    </div>
+    <button class="btn btn-primary" onclick="goToRoster()">Avanti: Rosa →</button>
+  </div>
+</div>
+
+<!-- ══════ S2: ROSA ══════ -->
+<div id="s-roster" class="screen">
+  <div style="display:flex;align-items:center;justify-content:space-between">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.4rem;color:var(--accent)">Rosa</div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span class="saved-badge hidden" id="save-badge">✓ Salvata</span>
+      <button class="btn btn-sm" onclick="showScreen('s-match')">← Indietro</button>
+    </div>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden">
+    <div class="roster-wrap">
+      <table class="roster-tbl">
+        <thead><tr>
+          <th style="width:42px">#</th>
+          <th>Nome</th>
+          <th>Cognome</th>
+          <th style="width:76px">Ruolo</th>
+          <th style="width:32px"></th>
+        </tr></thead>
+        <tbody id="roster-body"></tbody>
+      </table>
+    </div>
+    <div style="display:flex;gap:8px;padding:10px 12px;border-top:1px solid var(--border)">
+      <button class="btn btn-sm" onclick="addRow()" style="flex:1">+ Giocatrice</button>
+      <button class="btn btn-blue" onclick="saveRosterAndContinue()" style="flex:2">Formazione →</button>
+    </div>
+  </div>
+  <div style="font-size:.7rem;color:var(--muted);padding:0 3px;line-height:1.7">
+    <b style="color:var(--accent)">P</b>=Palleggiatrice &nbsp;
+    <b style="color:var(--green)">S1/S2</b>=Banda &nbsp;
+    <b style="color:var(--blue)">C1/C2</b>=Centrale &nbsp;
+    <b style="color:var(--red)">O</b>=Opposto &nbsp;
+    <b style="color:var(--teal)">L</b>=Libero
+  </div>
+</div>
+
+<!-- ══════ S3: FORMAZIONE ══════ -->
+<div id="s-lineup" class="screen">
+  <div style="display:flex;align-items:center;justify-content:space-between">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.4rem;color:var(--accent)">Formazione</div>
+    <button class="btn btn-sm" onclick="showScreen('s-roster')">← Indietro</button>
+  </div>
+
+  <!-- Posizione iniziale palleggiatrice -->
+  <div class="card">
+    <div class="card-hd">
+      <div class="sec-title">Posizione iniziale palleggiatrice</div>
+    </div>
+    <div class="setter-picker" id="setter-picker">
+      <!-- riempito da JS -->
+    </div>
+    <div style="font-size:.68rem;color:var(--muted);margin-top:8px">
+      P1 = palleggiatrice in zona 1 (battuta) · P4 = palleggiatrice in zona 4 (prima linea avanti sinistra) ecc.
+    </div>
+  </div>
+
+  <!-- Assegnazione visiva posizioni campo -->
+  <div class="card">
+    <div class="card-hd">
+      <div class="sec-title">Assegna giocatrici alle posizioni</div>
+    </div>
+    <div style="display:flex;justify-content:space-between;padding:0 4px 4px">
+      <!-- span class="back-label">← seconda linea</span-->
+      <!-- span class="back-label">prima linea →</span-->
+    </div>
+    <div class="lineup-court" id="lineup-court">
+      <!-- riempito da JS -->
+    </div>
+    <div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:8px" id="libero-slots">
+      <!-- riempito da JS -->
+    </div>
+    <button class="btn btn-primary" style="margin-top:13px" onclick="startMatch()">▶ Inizia partita</button>
+  </div>
+</div>
+
+<!-- ══════ S4: PARTITA IN CORSO ══════ -->
+<div id="s-main" class="screen">
+  <div class="topbar">
+    <div class="logo-sm">VS</div>
+    <div class="match-sm" id="match-sm"></div>
+    <div style="font-size:.66rem;color:var(--muted)" id="clock"></div>
+  </div>
+
+  <!-- Punteggio -->
+  <div class="score-block">
+    <div class="team-score">
+      <div class="team-nm" id="lbl-us">NOI</div>
+      <div class="score-n us" id="sc-us">0</div>
+      <div class="sc-ctrl">
+        <button class="sc-btn" onclick="chSc('us',1)">+</button>
+        <button class="sc-btn" onclick="chSc('us',-1)">−</button>
+      </div>
+    </div>
+    <div class="score-div">:</div>
+    <div class="team-score">
+      <div class="team-nm" id="lbl-opp">AVV</div>
+      <div class="score-n" id="sc-opp">0</div>
+      <div class="sc-ctrl">
+        <button class="sc-btn" onclick="chSc('opp',1)">+</button>
+        <button class="sc-btn" onclick="chSc('opp',-1)">−</button>
+      </div>
+    </div>
+    <div class="set-info">
+      <div class="set-lbl">Set</div>
+      <div class="set-n" id="set-n">1</div>
+      <div class="set-hist" id="set-hist"></div>
+      <button class="btn-nset" onclick="nextSet()">Fine set →</button>
+    </div>
+  </div>
+
+  <!-- Campo -->
+  <div class="court-wrap">
+    <div class="court-hd">
+      <div class="sec-title">Campo</div>
+      <div class="rot-badge" id="rot-badge">P1</div>
+    </div>
+    <div class="court" id="court"></div>
+    <div class="court-acts">
+      <button class="btn-rotate" onclick="doRotate()">↻ Rotazione</button>
+      <button class="btn-switch-lib hidden" id="btn-switch-lib" onclick="switchLib()">⇄ Libero</button>
+    </div>
+  </div>
+
+  <!-- Errori -->
+  <div class="err-wrap">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div class="sec-title">Errori — Set <span id="err-set-n">1</span></div>
+    </div>
+    <div class="err-grid">
+      <button class="err-btn servizio"  onclick="addErr('servizio')">
+        <span class="err-ic">🏐</span>
+        <div class="err-lb">Servizio</div>
+        <div class="err-ct" id="cnt-servizio">0</div>
+        <div class="err-rg" id="rg-servizio"></div>
+      </button>
+      <button class="err-btn ricezione" onclick="addErr('ricezione')">
+        <span class="err-ic">🤲</span>
+        <div class="err-lb">Ricezione</div>
+        <div class="err-ct" id="cnt-ricezione">0</div>
+        <div class="err-rg" id="rg-ricezione"></div>
+      </button>
+      <button class="err-btn alzata"    onclick="addErr('alzata')">
+        <span class="err-ic">🙌</span>
+        <div class="err-lb">Alzata</div>
+        <div class="err-ct" id="cnt-alzata">0</div>
+        <div class="err-rg" id="rg-alzata"></div>
+      </button>
+      <button class="err-btn attacco"   onclick="addErr('attacco')">
+        <span class="err-ic">💥</span>
+        <div class="err-lb">Attacco</div>
+        <div class="err-ct" id="cnt-attacco">0</div>
+        <div class="err-rg" id="rg-attacco"></div>
+      </button>
+    </div>
+  </div>
+
+  <div class="acts-bar">
+    <button class="btn-undo" onclick="undoErr()">↩ Annulla</button>
+    <button class="btn-end"  onclick="endMatch()">Fine partita →</button>
+  </div>
+</div>
+
+<!-- Modale sostituzione -->
+<div id="sub-modal" class="modal-overlay hidden">
+  <div class="modal-content" id="sub-content">
+    <!-- riempito da JS -->
+  </div>
+</div>
+
+<!-- ══════ S5: RIEPILOGO ══════ -->
+<div id="s-summary" class="screen">
+  <div>
+    <div class="sum-ttl">Riepilogo</div>
+    <div class="sum-meta" id="sum-meta"></div>
+  </div>
+  <div class="card">
+    <div class="sec-title" style="margin-bottom:7px">Risultato</div>
+    <div class="sum-score" id="sum-score"></div>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden">
+    <div style="padding:9px 13px;background:var(--surface2);border-bottom:1px solid var(--border)" class="sec-title">Errori per Set</div>
+    <table><thead><tr>
+      <th>Set</th>
+      <th style="color:var(--red)">Serv.</th>
+      <th style="color:var(--purple)">Ric.</th>
+      <th style="color:var(--blue)">Alz.</th>
+      <th style="color:var(--green)">Att.</th>
+      <th>Tot.</th>
+    </tr></thead><tbody id="sum-tbody"></tbody></table>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden">
+    <div style="padding:9px 13px;background:var(--surface2);border-bottom:1px solid var(--border)" class="sec-title">Sostituzioni</div>
+    <div id="sub-log"></div>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden">
+    <div style="padding:9px 13px;background:var(--surface2);border-bottom:1px solid var(--border)" class="sec-title">Log errori</div>
+    <div id="err-log"></div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <button class="btn btn-green" onclick="exportCSV()">⬇ Esporta CSV</button>
+    <button class="btn btn-ghost" onclick="newMatch()">+ Nuova partita</button>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+// COSTANTI
+// ══════════════════════════════════════════════
+const ROLES = ['P','S1','S2','C1','C2','O','L'];
+const SCHEME_ROLE = {1:'P',2:'S1',3:'C2',4:'O',5:'S2',6:'C1'}; // posizione di schema → ruolo
+// Mappatura griglia visiva → posizione campo
+// Celle griglia (riga0=seconda linea, riga1=prima linea): [pos4, pos3, pos2, pos5, pos6, pos1]
+const GRID_TO_POS = [4, 3, 2, 5, 6, 1];
+const LS_ROSTER  = 'vs_roster';
+const LS_LINEUP  = 'vs_lineup';
+const LS_OURNAME = 'vs_ourname';
+
+// ══════════════════════════════════════════════
+// STATO APPLICAZIONE
+// ══════════════════════════════════════════════
+let roster = [];
+let nextId = 1;
+// formazione: {pos1..6: idGiocatrice, libero1: id, libero2: id, setterStartPos: 1..6}
+let lineup = {1:null,2:null,3:null,4:null,5:null,6:null,libero1:null,libero2:null,setterStartPos:1};
+let M = {}; // stato della partita
+
+function initM() {
+  M = {
+    ourName:'', oppName:'',
+    // rotazione = numero di side-out avvenuti; 0 = posizione iniziale
+    rotation: 0,
+    setterStartPos: 1, // posizione di campo iniziale della palleggiatrice
+    currentSet: 1,
+    scoreUs: 0, scoreOpp: 0,
+    setScores: [],
+    errors: [],
+    activeLibId: null,
+    startTime: null,
+    // Tracciamento sostituzioni
+    substitutions: [], // {set, outId, inId, setterPos, ts}
+    subPairs: {},      // outId -> inId (per controllo regolamento)
+    currentLineup: {}, // Giocatrici in campo (copia della formazione, modificata dalle sostituzioni)
+  };
+}
+
+// Stato modalità sostituzione
+let subMode = { active: false, outId: null, courtPos: null };
+
+// ══════════════════════════════════════════════
+// NAVIGAZIONE
+// ══════════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+// ══════════════════════════════════════════════
+// LOCAL STORAGE
+// ══════════════════════════════════════════════
+function saveToStorage() {
+  try {
+    localStorage.setItem(LS_ROSTER,  JSON.stringify(roster));
+    localStorage.setItem(LS_LINEUP,  JSON.stringify(lineup));
+    const ourVal = document.getElementById('our-name').value.trim();
+    if (ourVal) localStorage.setItem(LS_OURNAME, ourVal);
+  } catch(e) {}
+}
+
+function loadFromStorage() {
+  try {
+    const r = localStorage.getItem(LS_ROSTER);
+    if (r) {
+      roster = JSON.parse(r);
+      nextId = Math.max(...roster.map(p=>p.id), 0) + 1;
+    }
+    const l = localStorage.getItem(LS_LINEUP);
+    if (l) lineup = JSON.parse(l);
+    const n = localStorage.getItem(LS_OURNAME);
+    if (n) document.getElementById('our-name').value = n;
+  } catch(e) {}
+}
+
+// ══════════════════════════════════════════════
+// S1 → S2: DATI PARTITA → ROSA
+// ══════════════════════════════════════════════
+function goToRoster() {
+  const our = document.getElementById('our-name').value.trim();
+  const opp = document.getElementById('opp-name').value.trim();
+  if (!our || !opp) { alert('Inserisci il nome di entrambe le squadre.'); return; }
+  if (roster.length === 0) buildDefaultRoster();
+  renderRoster();
+  showScreen('s-roster');
+}
+
+function buildDefaultRoster() {
+  const defs = [
+    {num:'1', firstName:'Palleggiatrice', lastName:'', role:'P'},
+    {num:'7', firstName:'Banda',          lastName:'1',role:'S1'},
+    {num:'5', firstName:'Centrale',       lastName:'1',role:'C1'},
+    {num:'10',firstName:'Opposto',        lastName:'', role:'O'},
+    {num:'9', firstName:'Banda',          lastName:'2',role:'S2'},
+    {num:'3', firstName:'Centrale',       lastName:'2',role:'C2'},
+    {num:'13',firstName:'Libero',         lastName:'1',role:'L'},
+    // Riserve
+    {num:'2', firstName:'Palleggiatrice', lastName:'2',role:'P'},
+    {num:'8', firstName:'Banda',          lastName:'3',role:'S1'},
+    {num:'6', firstName:'Centrale',       lastName:'3',role:'C1'},
+    {num:'11',firstName:'Opposto',        lastName:'2',role:'O'},
+    {num:'14',firstName:'Libero',         lastName:'2',role:'L'},
+  ];
+  defs.forEach(d => roster.push({id:nextId++,...d}));
+}
+
+function addRow() {
+  if (roster.length >= 14) { alert('Rosa completa (max 14).'); return; }
+  roster.push({id:nextId++,num:'',firstName:'',lastName:'',role:'S1'});
+  renderRoster();
+}
+
+function removeRow(id) {
+  roster = roster.filter(p=>p.id!==id);
+  renderRoster();
+}
+
+function renderRoster() {
+  syncRosterFromDOM();
+  const tb = document.getElementById('roster-body');
+  tb.innerHTML = '';
+  roster.forEach(p => {
+    tb.innerHTML += `<tr id="row-${p.id}">
+      <td><input type="number" min="1" max="99" value="${p.num}" placeholder="#"
+        oninput="patchRoster(${p.id},'num',this.value)"
+        style="width:42px;padding:6px 5px;text-align:center"></td>
+      <td><input type="text" value="${p.firstName}" placeholder="Nome"
+        oninput="patchRoster(${p.id},'firstName',this.value)"></td>
+      <td><input type="text" value="${p.lastName}" placeholder="Cognome"
+        oninput="patchRoster(${p.id},'lastName',this.value)"></td>
+      <td><select onchange="patchRoster(${p.id},'role',this.value)">
+        ${ROLES.map(r=>`<option value="${r}"${r===p.role?' selected':''}>${r}</option>`).join('')}
+      </select></td>
+      <td><button class="btn-remove" onclick="removeRow(${p.id})">✕</button></td>
+    </tr>`;
+  });
+}
+
+function syncRosterFromDOM() {
+  roster.forEach(p => {
+    const row = document.getElementById(`row-${p.id}`);
+    if (!row) return;
+    const inputs = row.querySelectorAll('input');
+    p.num       = inputs[0].value;
+    p.firstName = inputs[1].value;
+    p.lastName  = inputs[2].value;
+    p.role      = row.querySelector('select').value;
+  });
+}
+
+function patchRoster(id,field,val) {
+  const p = roster.find(x=>x.id===id);
+  if (p) p[field]=val;
+}
+
+// ══════════════════════════════════════════════
+// S2 → S3: ROSA → FORMAZIONE
+// ══════════════════════════════════════════════
+function saveRosterAndContinue() {
+  syncRosterFromDOM();
+  saveToStorage();
+  // Mostra il badge "Salvata" brevemente
+  const badge = document.getElementById('save-badge');
+  badge.classList.remove('hidden');
+  setTimeout(()=>badge.classList.add('hidden'), 2000);
+  buildLineupScreen();
+  showScreen('s-lineup');
+}
+
+function buildLineupScreen() {
+  // Selettore posizione iniziale palleggiatrice
+  const picker = document.getElementById('setter-picker');
+  picker.innerHTML = '';
+  for (let p = 1; p <= 6; p++) {
+    const sel = p === (lineup.setterStartPos||1);
+    picker.innerHTML += `<button class="sp-btn${sel?' sel':''}" onclick="selectSetterPos(${p})" id="sp-${p}">P${p}</button>`;
+  }
+
+  renderLineupCourt();
+  renderLiberoSlots();
+}
+
+function selectSetterPos(pos) {
+  lineup.setterStartPos = pos;
+  document.querySelectorAll('.sp-btn').forEach(b=>b.classList.remove('sel'));
+  document.getElementById(`sp-${pos}`).classList.add('sel');
+  autoAssignByRole();
+  renderLineupCourt();
+}
+
+function autoAssignByRole() {
+  for (let p = 1; p <= 6; p++) lineup[p] = null;
+  const nonLib = roster.filter(p => p.role !== 'L');
+  const used = new Set();
+  for (let courtPos = 1; courtPos <= 6; courtPos++) {
+    const role = expectedRoleAtCourt(courtPos);
+    const match = nonLib.find(p => p.role === role && !used.has(p.id));
+    if (match) { lineup[courtPos] = match.id; used.add(match.id); }
+  }
+}
+
+// Ruolo atteso in una data posizione di campo, in base alla posizione iniziale della palleggiatrice.
+// Quando la palleggiatrice è in pos X, lo scarto di rotazione sposta tutti i ruoli:
+// Schema originale: pos1=P, pos2=S1, pos3=C2, pos4=O, pos5=S2, pos6=C1
+// Se la palleggiatrice parte dalla pos P (diversa da 1), le assegnazioni ruotano di conseguenza:
+// posizione schema p → posizione campo: ((p - 1 + (setterStartPos-1)) % 6) + 1
+function expectedRoleAtCourt(courtPos) {
+  const sp = lineup.setterStartPos || 1;
+  // inverso: quale posizione di schema corrisponde a questa posizione campo dato setter in sp?
+  const schemePos = ((courtPos - sp + 6) % 6) + 1;
+  return SCHEME_ROLE[schemePos] || '?';
+}
+
+function renderLineupCourt() {
+  const court = document.getElementById('lineup-court');
+  court.innerHTML = '';
+  const nonLib = roster.filter(p=>p.role!=='L');
+
+  GRID_TO_POS.forEach(courtPos => {
+    const sp = lineup.setterStartPos || 1;
+    const isSetterPos = (courtPos === sp);
+    const expectedRole = expectedRoleAtCourt(courtPos);
+
+    const roleColors = {P:'var(--accent)',S1:'var(--green)',S2:'#9ae6b4',
+      C1:'var(--blue)',C2:'#90cdf4',O:'var(--red)','?':'var(--muted)'};
+    const roleColor = roleColors[expectedRole] || 'var(--muted)';
+
+    const opts = nonLib.map(p => {
+      const disp = `${p.num?'#'+p.num+' ':''}${p.firstName}${p.lastName?' '+p.lastName[0]+'.':''} (${p.role})`;
+      return `<option value="${p.id}"${lineup[courtPos]===p.id?' selected':''}>${disp}</option>`;
+    }).join('');
+
+    const cell = document.createElement('div');
+    cell.className = `lc-cell${isSetterPos?' is-setter':''}`;
+    cell.innerHTML = `
+      <div class="pos-tag">${courtPos}</div>
+      <div class="lc-role-hint" style="color:${roleColor};margin-top:12px">${expectedRole}</div>
+      <select onchange="lineup[${courtPos}]=parseInt(this.value)||null">
+        <option value="">—</option>
+        ${opts}
+      </select>`;
+    court.appendChild(cell);
+
+    // Aggiorna il select con l'assegnazione formazione corrente (già impostata da autoAssignByRole)
+    if (lineup[courtPos]) {
+      cell.querySelector('select').value = lineup[courtPos];
+    } else {
+      const match = nonLib.find(p=>p.role===expectedRole);
+      if (match) {
+        lineup[courtPos] = match.id;
+        cell.querySelector('select').value = match.id;
+      }
+    }
+  });
+}
+
+function renderLiberoSlots() {
+  const liberos = roster.filter(p=>p.role==='L');
+  const libOpts = liberos.map(p=>
+    `<option value="${p.id}">${p.num?'#'+p.num+' ':''}${p.firstName} ${p.lastName} (L)</option>`
+  ).join('');
+
+  document.getElementById('libero-slots').innerHTML = `
+    <div class="field-grp">
+      <label>Libero titolare (L1)</label>
+      <select id="sel-l1" onchange="lineup.libero1=parseInt(this.value)||null">
+        <option value="">— nessuno —</option>${libOpts}
+      </select>
+    </div>
+    <div class="field-grp">
+      <label>Libero emergenza (L2)</label>
+      <select id="sel-l2" onchange="lineup.libero2=parseInt(this.value)||null">
+        <option value="">— nessuno —</option>${libOpts}
+      </select>
+    </div>`;
+
+  if (lineup.libero1 || liberos[0]) {
+    document.getElementById('sel-l1').value = lineup.libero1 || (liberos[0]?.id||'');
+    lineup.libero1 = parseInt(document.getElementById('sel-l1').value)||null;
+  }
+  if (lineup.libero2 || liberos[1]) {
+    document.getElementById('sel-l2').value = lineup.libero2 || (liberos[1]?.id||'');
+    lineup.libero2 = parseInt(document.getElementById('sel-l2').value)||null;
+  }
+}
+
+// ══════════════════════════════════════════════
+// S3 → S4: FORMAZIONE → PARTITA
+// ══════════════════════════════════════════════
+function startMatch() {
+  // Sincronizza i select del libero
+  const l1el = document.getElementById('sel-l1');
+  const l2el = document.getElementById('sel-l2');
+  if (l1el) lineup.libero1 = parseInt(l1el.value)||null;
+  if (l2el) lineup.libero2 = parseInt(l2el.value)||null;
+  lineup.setterStartPos = lineup.setterStartPos || 1;
+  saveToStorage();
+
+  initM();
+  M.ourName  = document.getElementById('our-name').value.trim() || 'Noi';
+  M.oppName  = document.getElementById('opp-name').value.trim() || 'Avversario';
+  M.setterStartPos = lineup.setterStartPos;
+  M.rotation = 0;
+  M.activeLibId = lineup.libero1;
+  M.startTime = new Date();
+  
+  // Inizializza la formazione corrente come copia della formazione iniziale
+  for (let p = 1; p <= 6; p++) {
+    M.currentLineup[p] = lineup[p];
+  }
+
+  document.getElementById('lbl-us').textContent  = M.ourName.substring(0,12);
+  document.getElementById('lbl-opp').textContent = M.oppName.substring(0,12);
+  document.getElementById('match-sm').textContent = `${M.ourName} vs ${M.oppName}`;
+
+  renderMatch();
+  tickClock();
+  setInterval(tickClock, 30000);
+  showScreen('s-main');
+}
+
+function tickClock() {
+  const el = document.getElementById('clock');
+  if (el) el.textContent = new Date().toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
+}
+
+// ══════════════════════════════════════════════
+// CALCOLO ROTAZIONI
+// ══════════════════════════════════════════════
+// Nel volley la rotazione è in senso orario sul campo.
+// Dal punto di vista numerico, ad ogni side-out la posizione P scende:
+//   1→6→5→4→3→2→1
+// Dopo `rot` side-out, la palleggiatrice si trova in:
+//   setterCurrentPos = ((setterStartPos - 1 - rot + 600) % 6) + 1
+// Una giocatrice originariamente in posizione formazione X si trova ora in pos campo:
+//   courtPos = ((X - 1 - rot + 600) % 6) + 1
+// Inverso: chi si trova in posizione campo C dopo rot rotazioni?
+//   lineupPos = ((C - 1 + rot) % 6) + 1
+
+function setterCurrentPos() {
+  return ((M.setterStartPos - 1 - M.rotation % 6 + 600) % 6) + 1;
+}
+
+function lineupPosAtCourtPos(courtPos) {
+  return ((courtPos - 1 + M.rotation) % 6) + 1;
+}
+
+function playerIdAtCourtPos(courtPos) {
+  const lp = lineupPosAtCourtPos(courtPos);
+  // Usa la formazione corrente se disponibile (dopo sostituzioni), altrimenti quella iniziale
+  return M.currentLineup[lp] || lineup[lp];
+}
+
+function getP(id) { return roster.find(p=>p.id===id); }
+
+function dispName(p) {
+  if (!p) return '—';
+  const n = p.num ? `#${p.num} ` : '';
+  const last = p.lastName ? ' '+p.lastName[0]+'.' : '';
+  return n + (p.firstName||'') + last;
+}
+
+// Auto-sostituzione libero: il libero sostituisce una centrale SOLO nelle zone 5 e 6.
+// Zona 1 = battuta: la centrale deve essere in campo per battere, il libero resta fuori.
+// Zone 2, 3, 4 = prima linea: la centrale è in campo, niente libero.
+const LIBERO_ZONES = new Set([5, 6]);
+
+function liberoCoveredCourtPos() {
+  if (!M.activeLibId) return null;
+  // Trova tutte le centrali e controlla la loro posizione campo corrente.
+  // La centrale si sposta dalla posizione formazione alla posizione campo con la stessa
+  // logica della palleggiatrice: courtPos = ((lp - 1 - rotation + 600) % 6) + 1
+  const results = [];
+  for (let lp = 1; lp <= 6; lp++) {
+    const id = M.currentLineup[lp] || lineup[lp];
+    const p  = getP(id);
+    if (!p) continue;
+    if (p.role === 'C1' || p.role === 'C2') {
+      // Formula corretta: stessa direzione della rotazione palleggiatrice
+      const cp = ((lp - 1 - M.rotation % 6 + 600) % 6) + 1;
+      if (LIBERO_ZONES.has(cp)) results.push({ courtPos: cp, playerId: id });
+    }
+  }
+  // Restituisce il primo risultato (dovrebbe esserci al massimo una centrale in zona libero alla volta)
+  return results[0] || null;
+}
+
+// ══════════════════════════════════════════════
+// RENDERING PARTITA
+// ══════════════════════════════════════════════
+function renderMatch() {
+  renderCourt();
+  renderErrors();
+  renderScores();
+}
+
+function renderCourt() {
+  const courtEl = document.getElementById('court');
+  courtEl.innerHTML = '';
+
+  const sc = setterCurrentPos();
+  // Notazione: P + posizione campo corrente della palleggiatrice
+  document.getElementById('rot-badge').textContent = `P${sc}`;
+  document.getElementById('err-set-n').textContent = M.currentSet;
+
+  const covered = liberoCoveredCourtPos();
+  const libBtn  = document.getElementById('btn-switch-lib');
+  if (covered && M.activeLibId) libBtn.classList.remove('hidden');
+  else libBtn.classList.add('hidden');
+
+  GRID_TO_POS.forEach(courtPos => {
+    const cell = document.createElement('div');
+    cell.className = 'p-cell';
+
+    let pid = playerIdAtCourtPos(courtPos);
+    let p   = getP(pid);
+    let isLib = false;
+
+    if (covered && covered.courtPos === courtPos && M.activeLibId) {
+      pid = M.activeLibId;
+      p   = getP(M.activeLibId);
+      isLib = true;
+    }
+
+    const isServe = (courtPos === 1);
+    if (isServe) cell.classList.add('is-serve');
+    if (isLib)   cell.classList.add('is-lib');
+    
+    // Cella cliccabile per la sostituzione (non per il libero)
+    cell.style.cursor = 'pointer';
+    cell.onclick = () => startSubstitution(courtPos, pid);
+
+    cell.innerHTML = `
+      <div class="p-num">${courtPos}</div>
+      <div class="p-name">${p ? dispName(p) : '—'}</div>
+      <div class="p-role">${p ? (isLib?'L':p.role) : ''}</div>
+      ${isServe ? '<div class="p-serv-tag">🏐 battuta</div>' : ''}`;
+    courtEl.appendChild(cell);
+  });
+}
+
+function renderScores() {
+  document.getElementById('sc-us').textContent  = M.scoreUs;
+  document.getElementById('sc-opp').textContent = M.scoreOpp;
+  document.getElementById('set-n').textContent  = M.currentSet;
+  document.getElementById('set-hist').textContent =
+    M.setScores.map((s,i)=>`S${i+1}: ${s.us}-${s.opp}`).join('\n');
+}
+
+function renderErrors() {
+  const se = M.errors.filter(e=>e.set===M.currentSet);
+  ['servizio','ricezione','alzata','attacco'].forEach(f => {
+    const cnt = se.filter(e=>e.fundamental===f).length;
+    document.getElementById(`cnt-${f}`).textContent = cnt;
+    const last = [...se].reverse().find(e=>e.fundamental===f);
+    document.getElementById(`rg-${f}`).textContent = last ? `P${last.setterPos}` : '';
+  });
+}
+
+// ══════════════════════════════════════════════
+// INTERAZIONI UTENTE
+// ══════════════════════════════════════════════
+function doRotate() {
+  M.rotation = (M.rotation + 1) % 6;
+  // Aggiunge automaticamente un punto a noi in caso di side-out
+  M.scoreUs++;
+  renderMatch();
+}
+
+function switchLib() {
+  if (!lineup.libero2) return;
+  M.activeLibId = (M.activeLibId === lineup.libero1) ? lineup.libero2 : lineup.libero1;
+  renderCourt();
+}
+
+// ══════════════════════════════════════════════
+// SISTEMA SOSTITUZIONI
+// ══════════════════════════════════════════════
+function startSubstitution(courtPos, playerId) {
+  // Non permettere la sostituzione del libero in campo
+  const covered = liberoCoveredCourtPos();
+  if (covered && covered.courtPos === courtPos && M.activeLibId) {
+    alert('Non puoi sostituire il libero. Usa il pulsante "⇄ Libero" per cambiarlo.');
+    return;
+  }
+  
+  subMode = { active: true, outId: playerId, courtPos: courtPos };
+  renderSubModal();
+}
+
+function renderSubModal() {
+  const outPlayer = getP(subMode.outId);
+  
+  // Recupera le giocatrici disponibili per la sostituzione
+  const onCourt = new Set();
+  for (let p = 1; p <= 6; p++) {
+    onCourt.add(M.currentLineup[p]);
+  }
+  // Aggiungi i liberi come non disponibili
+  if (lineup.libero1) onCourt.add(lineup.libero1);
+  if (lineup.libero2) onCourt.add(lineup.libero2);
+  
+  // Controlla se questa giocatrice è entrata tramite sostituzione (è un VALORE in subPairs)
+  // In tal caso, può rientrare solo la giocatrice originale (la CHIAVE)
+  const originalPlayer = Object.keys(M.subPairs).find(k => M.subPairs[k] === subMode.outId);
+  const mustReturnOriginal = originalPlayer ? parseInt(originalPlayer) : null;
+  
+  let availablePlayers = [];
+  if (mustReturnOriginal) {
+    // Questa è una riserva entrata — può rientrare solo la titolare originale
+    availablePlayers = [getP(mustReturnOriginal)];
+  } else {
+    // Può entrare qualsiasi giocatrice in panchina non già in campo
+    availablePlayers = roster.filter(p => 
+      !onCourt.has(p.id) && 
+      p.role !== 'L' &&
+      !Object.values(M.subPairs).includes(p.id) // Non già entrata per qualcun'altra
+    );
+    // Permetti anche il rientro della titolare originale se questa giocatrice l'ha sostituita
+    if (M.subPairs[subMode.outId]) {
+      const canReturn = getP(M.subPairs[subMode.outId]);
+      if (canReturn && !availablePlayers.find(p => p.id === canReturn.id)) {
+        availablePlayers.push(canReturn);
+      }
+    }
+  }
+  
+  const modal = document.getElementById('sub-modal');
+  const content = document.getElementById('sub-content');
+  
+  content.innerHTML = `
+    <div style="text-align:center;margin-bottom:15px">
+      <div class="sec-title" style="margin-bottom:8px">Sostituzione</div>
+      <div style="font-size:1.1rem;font-weight:700;color:var(--red)">
+        ESCE: ${dispName(outPlayer)} (${outPlayer?.role || '?'})
+      </div>
+      ${mustReturnOriginal ? `<div style="font-size:.7rem;color:var(--accent);margin-top:4px">⚠ Deve rientrare il giocatore originale</div>` : ''}
+    </div>
+    <div class="sec-title" style="margin-bottom:8px">Seleziona chi entra:</div>
+    <div class="sub-player-list">
+      ${availablePlayers.length === 0 ? 
+        '<div class="empty">Nessun giocatore disponibile per la sostituzione</div>' :
+        availablePlayers.map(p => `
+          <button class="sub-player-btn" onclick="confirmSubstitution(${p.id})">
+            <span class="sub-p-num">${p.num ? '#'+p.num : ''}</span>
+            <span class="sub-p-name">${p.firstName} ${p.lastName}</span>
+            <span class="sub-p-role">${p.role}</span>
+          </button>
+        `).join('')
+      }
+    </div>
+    <button class="btn btn-ghost" style="margin-top:12px" onclick="cancelSubstitution()">Annulla</button>
+  `;
+  
+  modal.classList.remove('hidden');
+}
+
+function confirmSubstitution(inId) {
+  const outId = subMode.outId;
+  const courtPos = subMode.courtPos;
+  
+  // Registra la sostituzione
+  M.substitutions.push({
+    set: M.currentSet,
+    outId: outId,
+    inId: inId,
+    setterPos: setterCurrentPos(),
+    ts: new Date().toISOString()
+  });
+  
+  // Aggiorna le coppie di sostituzione per il controllo regolamento
+  // Se outId era una riserva entrata (presente come VALORE in subPairs), rimuovi quella coppia
+  const wasSubbedFor = Object.keys(M.subPairs).find(k => M.subPairs[k] === outId);
+  if (wasSubbedFor) {
+    // La titolare originale sta rientrando
+    delete M.subPairs[wasSubbedFor];
+  } else {
+    // Nuova sostituzione — registra la coppia
+    M.subPairs[outId] = inId;
+  }
+  
+  // Aggiorna la formazione corrente
+  const lineupPos = lineupPosAtCourtPos(courtPos);
+  M.currentLineup[lineupPos] = inId;
+  
+  // Chiudi il modale e aggiorna il campo
+  cancelSubstitution();
+  renderCourt();
+}
+
+function cancelSubstitution() {
+  subMode = { active: false, outId: null, courtPos: null };
+  document.getElementById('sub-modal').classList.add('hidden');
+}
+
+function chSc(team, delta) {
+  if (team==='us') M.scoreUs = Math.max(0, M.scoreUs+delta);
+  else             M.scoreOpp = Math.max(0, M.scoreOpp+delta);
+  renderScores();
+  renderCourt(); // libero/centrale potrebbero cambiare al side-out (cambio punteggio)
+}
+
+function nextSet() {
+  M.setScores.push({us:M.scoreUs, opp:M.scoreOpp});
+  M.currentSet++;
+  M.scoreUs = 0; M.scoreOpp = 0;
+  renderMatch();
+}
+
+function addErr(fundamental) {
+  M.errors.push({
+    set: M.currentSet,
+    rotation: M.rotation,
+    setterPos: setterCurrentPos(),
+    fundamental,
+    ts: new Date().toISOString(),
+  });
+  const btn = document.querySelector(`.err-btn.${fundamental}`);
+  btn.classList.remove('flash'); void btn.offsetWidth; btn.classList.add('flash');
+  renderErrors();
+}
+
+function undoErr() {
+  for (let i = M.errors.length-1; i >= 0; i--) {
+    if (M.errors[i].set === M.currentSet) { M.errors.splice(i,1); break; }
+  }
+  renderErrors();
+}
+
+function endMatch() {
+  if (M.scoreUs > 0 || M.scoreOpp > 0 || M.setScores.length === 0)
+    M.setScores.push({us:M.scoreUs, opp:M.scoreOpp});
+  renderSummary();
+  showScreen('s-summary');
+}
+
+// ══════════════════════════════════════════════
+// RIEPILOGO PARTITA
+// ══════════════════════════════════════════════
+function renderSummary() {
+  const date = M.startTime.toLocaleDateString('it-IT');
+  document.getElementById('sum-meta').textContent = `${date} — ${M.ourName} vs ${M.oppName}`;
+
+  const wUs  = M.setScores.filter(s=>s.us>s.opp).length;
+  const wOpp = M.setScores.filter(s=>s.opp>s.us).length;
+  const ss   = M.setScores.map((s,i)=>`S${i+1}:${s.us}-${s.opp}`).join('  ');
+  document.getElementById('sum-score').innerHTML =
+    `<span>${M.ourName}</span> ${wUs} – ${wOpp} <span>${M.oppName}</span>
+     <div style="font-size:.76rem;color:var(--muted);margin-top:4px">${ss}</div>`;
+
+  const tb = document.getElementById('sum-tbody');
+  tb.innerHTML = '';
+  let tS=0,tR=0,tA=0,tAt=0;
+  M.setScores.forEach((sc,idx) => {
+    const s  = idx+1;
+    const se = M.errors.filter(e=>e.set===s);
+    const srv=se.filter(e=>e.fundamental==='servizio').length;
+    const ric=se.filter(e=>e.fundamental==='ricezione').length;
+    const alz=se.filter(e=>e.fundamental==='alzata').length;
+    const att=se.filter(e=>e.fundamental==='attacco').length;
+    tS+=srv;tR+=ric;tA+=alz;tAt+=att;
+    tb.innerHTML += `<tr>
+      <td>Set ${s} <small style="color:var(--muted)">${sc.us}-${sc.opp}</small></td>
+      <td class="cs">${srv||'–'}</td><td class="cr">${ric||'–'}</td>
+      <td class="ca">${alz||'–'}</td><td class="ct">${att||'–'}</td>
+      <td style="font-weight:700">${srv+ric+alz+att}</td>
+    </tr>`;
+  });
+  tb.innerHTML += `<tr class="tot-row"><td>TOTALE</td>
+    <td class="cs">${tS}</td><td class="cr">${tR}</td>
+    <td class="ca">${tA}</td><td class="ct">${tAt}</td>
+    <td>${tS+tR+tA+tAt}</td></tr>`;
+
+  // Rendering log sostituzioni
+  const subLog = document.getElementById('sub-log');
+  if (!M.substitutions.length) { 
+    subLog.innerHTML='<div class="empty">Nessuna sostituzione effettuata.</div>'; 
+  } else {
+    subLog.innerHTML = M.substitutions.map(s => {
+      const outP = getP(s.outId);
+      const inP = getP(s.inId);
+      return `
+        <div class="sub-item">
+          <span class="sub-out">${dispName(outP)}</span>
+          <span class="sub-arrow">→</span>
+          <span class="sub-in">${dispName(inP)}</span>
+          <span class="sub-meta">Set ${s.set} · P${s.setterPos} · ${new Date(s.ts).toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'})}</span>
+        </div>`;
+    }).join('');
+  }
+
+  const log = document.getElementById('err-log');
+  if (!M.errors.length) { log.innerHTML='<div class="empty">Nessun errore registrato.</div>'; return; }
+  log.innerHTML = M.errors.map(e=>`
+    <div class="log-item">
+      <span class="log-pill ${e.fundamental}">${e.fundamental}</span>
+      <span class="log-det">Set ${e.set} · P${e.setterPos}</span>
+      <span style="font-size:.6rem;color:var(--muted)">${new Date(e.ts).toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'})}</span>
+    </div>`).join('');
+}
+
+// ══════════════════════════════════════════════
+// ESPORTAZIONE CSV
+// ══════════════════════════════════════════════
+function exportCSV() {
+  const date = M.startTime.toLocaleDateString('it-IT').replace(/\//g,'-');
+  let csv = 'Data,Nostra_squadra,Avversario,Set,Punti_Noi,Punti_Avv,Pos_Palleggiatrice,Fondamentale,Ora\n';
+  M.errors.forEach(e => {
+    const sc = M.setScores[e.set-1]||{us:'-',opp:'-'};
+    csv += [date,`"${M.ourName}"`,`"${M.oppName}"`,e.set,sc.us,sc.opp,
+      `P${e.setterPos}`,e.fundamental,
+      new Date(e.ts).toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'})].join(',') + '\n';
+  });
+  csv += '\nSet,Servizio,Ricezione,Alzata,Attacco,Totale\n';
+  M.setScores.forEach((sc,idx)=>{
+    const s=idx+1, se=M.errors.filter(e=>e.set===s);
+    const a=se.filter(e=>e.fundamental==='servizio').length;
+    const b=se.filter(e=>e.fundamental==='ricezione').length;
+    const c=se.filter(e=>e.fundamental==='alzata').length;
+    const d=se.filter(e=>e.fundamental==='attacco').length;
+    csv+=`${s},${a},${b},${c},${d},${a+b+c+d}\n`;
+  });
+  
+  // Aggiunge le sostituzioni al CSV
+  csv += '\nSostituzioni\nSet,Esce_Num,Esce_Nome,Entra_Num,Entra_Nome,Pos_Palleggiatrice,Ora\n';
+  M.substitutions.forEach(s => {
+    const outP = getP(s.outId);
+    const inP = getP(s.inId);
+    csv += [s.set, outP?.num||'', `"${outP?.firstName||''} ${outP?.lastName||''}"`,
+      inP?.num||'', `"${inP?.firstName||''} ${inP?.lastName||''}"`,
+      `P${s.setterPos}`,
+      new Date(s.ts).toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'})].join(',') + '\n';
+  });
+  
+  csv += '\nRosa\nNum,Nome,Cognome,Ruolo\n';
+  roster.forEach(p=>{ csv+=`${p.num},"${p.firstName}","${p.lastName}",${p.role}\n`; });
+
+  const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = `volleyscout_${date}_${M.ourName.replace(/\s/g,'_')}_vs_${M.oppName.replace(/\s/g,'_')}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function newMatch() { showScreen('s-match'); }
+
+// ══════════════════════════════════════════════
+// INIZIALIZZAZIONE
+// ══════════════════════════════════════════════
+initM();
+loadFromStorage();
+tickClock();
+</script>
+
+</body>
+</html>
